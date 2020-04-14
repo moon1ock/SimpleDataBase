@@ -1,7 +1,7 @@
 package simpledb;
 
 import java.io.*;
-
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -40,11 +40,11 @@ public class BufferPool {
 	this.numPages = numPages;
 	this.pages = new ConcurrentHashMap<PageId, Page>(numPages);
     }
-    
+
     public static int getPageSize() {
       return pageSize;
     }
-    
+
     // THIS FUNCTION SHOULD ONLY BE USED FOR TESTING!!
     public static void setPageSize(int pageSize) {
     	BufferPool.pageSize = pageSize;
@@ -79,7 +79,8 @@ public class BufferPool {
 	else {
 	    // Eviction is not implemented; throw exception for now.
 	    if (this.pages.size() == this.numPages)
-		    throw new DbException("BufferPool is full!");
+            throw new DbException("BufferPool is full!");
+            // EVIT A PAGE ANDRIY
 	    else {
 		Page p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
 		this.pages.put(pid, p);
@@ -157,8 +158,14 @@ public class BufferPool {
         ArrayList<Page> newpages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
         for (Page page : newpages){
             page.markDirty(true, tid);
-            if(pages.containsKey(page.getId())) // update the cache
-                pages.put(page.getId(), page)
+            if(pages.containsKey(page.getId())) // update the cache if it already contains the page
+                pages.put(page.getId(), page);
+            else if(this.pages.size() < this.numPages) // if cache not full, add another page to it
+                pages.put(page.getId(), page);
+            else{ // if it's full, evict first, and then add page
+                this.evictPage();
+                pages.put(page.getId(), page);
+            }
         }
     }
 
