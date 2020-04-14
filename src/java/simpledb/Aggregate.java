@@ -125,7 +125,7 @@ public class Aggregate extends Operator {
 
     @Override
     public OpIterator[] getChildren() {
-	// some code goes here
+	// some code goes here`
 	return null;
     }
 
