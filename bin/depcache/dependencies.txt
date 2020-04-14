@@ -1593,7 +1593,9 @@ simpledb.IntField
 simpledb.TupleTest 2
 ||:simpledb.RecordId
 simpledb.RecordId
+java.util.Objects
 java.lang.Object
+java.lang.Integer
 simpledb.PageId
 java.io.Serializable
 ||:simpledb.BTreeFileInsertTest
@@ -2390,8 +2392,11 @@ java.lang.invoke.MethodHandles$Lookup
 simpledb.Field
 java.lang.invoke.MethodHandles
 java.lang.Object
+java.lang.Class
+java.lang.AssertionError
 java.lang.String
 java.lang.invoke.StringConcatFactory
+simpledb.TupleDesc
 java.util.ArrayList
 java.io.Serializable
 ||:simpledb.BTreeRootPtrPageTest
