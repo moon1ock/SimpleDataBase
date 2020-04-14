@@ -38,8 +38,6 @@ simpledb.AbstractDbFileIterator
 java.util.NoSuchElementException
 simpledb.TransactionAbortedException
 ||:simpledb.StringAggregator
-simpledb.StringAggregator$1
-java.lang.IllegalStateException
 java.util.Enumeration
 java.util.concurrent.ConcurrentHashMap
 simpledb.Aggregator$Op
