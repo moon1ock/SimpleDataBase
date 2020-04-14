@@ -1,10 +1,8 @@
 package simpledb;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.concurrent.ConcurrentHashMap;
-
-import jdk.nashorn.internal.runtime.arrays.ArrayLikeIterator;
 
 /**
  * Knows how to compute some aggregate over a set of StringFields.
@@ -13,12 +11,12 @@ public class StringAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
 
-    private int groupByFeild;
-    private Type groupByFieldType;
+    private int gbfield;
+    private Type gbfieldtype;
     private int afield;
     private Op what;
-    private ConcurrentHashMap<Field, Integer> vals;
-    private ConcurrentHashMap<Field, String> minMaxVals;
+    private ConcurrentHashMap<Field, Integer> values;
+    private ConcurrentHashMap<Field, String> extremum; // Extreme values (MAX/MIN)
 
     /**
      * Aggregate constructor
@@ -32,13 +30,13 @@ public class StringAggregator implements Aggregator {
     public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
         // some code goes here
         if (what!=Op.COUNT && what!=Op.MAX && what != Op.MIN)
-            throw new IllegalArgumentException("what is not MIN/MAX/COUNT");
-        this.groupByFeild= gbfield;
-        this.groupByFieldType = gbfieldtype;
+            throw new IllegalArgumentException("The operation is not supported");
+        this.gbfield = gbfield;
+        this.gbfieldtype = gbfieldtype;
         this.afield = afield;
         this.what = what;
-        this.vals = new ConcurrentHashMap<Field, Integer>();
-        this.minMaxVals = new ConcurrentHashMap<Field, String>();
+        this.values = new ConcurrentHashMap<Field, Integer>();
+        this.extremum = new ConcurrentHashMap<Field, String>();
 
 
     }
@@ -49,34 +47,41 @@ public class StringAggregator implements Aggregator {
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
-        Field key = new IntField(0);
+        Field fieldKey = new IntField(0);
+        String stringVal;
+        if(gbfield != Aggregator.NO_GROUPING)
+            fieldKey = tup.getField(gbfield);
 
-        if(this.groupByFeild != Aggregator.NO_GROUPING)
-            key = tup.getField(this.groupByFeild);
 
-
-        if (this.groupByFeild == Aggregator.NO_GROUPING || tup.getTupleDesc().getFieldType(this.groupByFeild).equals(this.groupByFieldType)){
-            String tupleString;
-            switch (this.what){
-                case COUNT:
-                    this.vals.put(key, this.vals.containsKey(key) ? this.vals.get(key)+1 : 1);
-                    break;
-                case MIN:
-                    tupleString = ((StringField)  (tup.getField(this.afield))).getValue();
-                    if(!this.minMaxVals.containsKey(key))
-                        this.minMaxVals.put(key, tupleString);
-                    else
-                        this.minMaxVals.put(key, this.minMaxVals.get(key).compareTo(tupleString) < 0 ? this.minMaxVals.get(key) : tupleString);
-                    break;
-                case MAX:
-                    tupleString = ((StringField)  (tup.getField(this.afield))).getValue();
-                    if(!this.minMaxVals.containsKey(key))
-                        this.minMaxVals.put(key, tupleString);
-                    else
-                        this.minMaxVals.put(key, this.minMaxVals.get(key).compareTo(tupleString) > 0 ? this.minMaxVals.get(key) : tupleString);
-                    break;
-                default:
-                    throw new IllegalStateException(what.toString());
+        if (tup.getTupleDesc().getFieldType(gbfield).equals(gbfieldtype) || gbfield == Aggregator.NO_GROUPING){
+            if(what == Op.COUNT){
+                if(values.containsKey(fieldKey)){//if the key is on the map
+                    values.put(fieldKey, values.get(fieldKey) + 1); //increment by one
+                }
+                else{//if not
+                    values.put(fieldKey, 1);//this is the first elem with such key
+                }
+            }
+            else if(what == Op.MAX || what == Op.MIN){ //if the operation is not COUNT
+                stringVal = ((StringField)  (tup.getField(afield))).getValue();
+                if(!extremum.containsKey(fieldKey)) {//if the key is not present
+                    extremum.put(fieldKey, stringVal);//puts a new element with key fieldKey
+                }
+                else if(what == Op.MAX){//if key is in the map and operation is MAX
+                    if (extremum.get(fieldKey).compareTo(stringVal) > 0) { // if the value the key holds is greater than stringVal
+                        extremum.put(fieldKey, extremum.get(fieldKey));
+                    }
+                    else {
+                        extremum.put(fieldKey, stringVal);
+                    }
+                } else if (what == Op.MIN) {//if key is in the map and operation is MIN
+                    if(extremum.get(fieldKey).compareTo(stringVal) < 0){// if the value the key holds is less than stringVal
+                        extremum.put(fieldKey, extremum.get(fieldKey));
+                    }
+                    else{
+                        extremum.put(fieldKey, stringVal);
+                    }
+                }
             }
         }
     }
@@ -91,29 +96,34 @@ public class StringAggregator implements Aggregator {
      */
     public OpIterator iterator() {
         // some code goes here
-        TupleDesc tupleDesc;
-        ArrayList<Tuple> listOfTuples = new ArrayList<Tuple>();
-        if(this.what == Op.COUNT){
-            tupleDesc = new TupleDesc (new TupleDesc(new Type[]{this.groupByFieldType, Type.INT_TYPE}));
-            Enumeration<Field> keys = this.vals.keys();
-            while (keys.hasMoreElements()) {
-                Tuple tuple = new Tuple(tupleDesc);
-                Field key = keys.nextElement();
-                tuple.setField(0, key);
-                tuple.setField(1, new IntField(this.vals.get(key)));
-                listOfTuples.add(tuple);
-            } }else {
-                tupleDesc = new TupleDesc(new Type[]{this.groupByFieldType, Type.STRING_TYPE});
-                Enumeration<Field> keys = this.minMaxVals.keys();
-                while (keys.hasMoreElements()) {
-                    Tuple tuple = new Tuple(tupleDesc);
-                    Field key = keys.nextElement();
-                    tuple.setField(0, key);
-                    tuple.setField(1, new StringField(this.minMaxVals.get(key), 1048));
-                    listOfTuples.add(tuple);
+        TupleDesc td;
+        Tuple tuple;
+        Field fieldKey;
+        Enumeration<Field> fieldKeys;
+        ArrayList<Tuple> lot = new ArrayList<Tuple>();// list of tuples
+        if(what == Op.MAX || what == Op.MIN) {// operator is either MAX or MIN
+            td = new TupleDesc(new Type[]{gbfieldtype, Type.STRING_TYPE});
+            fieldKeys = extremum.keys();
+            while (fieldKeys.hasMoreElements()) {
+                fieldKey = fieldKeys.nextElement();
+                tuple = new Tuple(td);
+                tuple.setField(0, fieldKey);
+                tuple.setField(1, new StringField(extremum.get(fieldKey), 1048));
+                lot.add(tuple);
             }
         }
-        return new TupleIterator(tupleDesc, listOfTuples);
+        else { // if COUNT
+            td = new TupleDesc (new Type[]{gbfieldtype, Type.INT_TYPE});
+            fieldKeys = values.keys();
+            while (fieldKeys.hasMoreElements()) {
+                fieldKey = fieldKeys.nextElement();
+                tuple = new Tuple(td);
+                tuple.setField(0, fieldKey);
+                tuple.setField(1, new IntField(values.get(fieldKey)));
+                lot.add(tuple);
+            }
+        }
+        return new TupleIterator(td, lot);
     }
 
 }

@@ -106,7 +106,7 @@ public class Aggregate extends Operator {
             while (child.hasNext())
                 aggregate.mergeTupleIntoGroup(child.next());
         }
-        else {// Type is INT
+        else {// If the Type is INT
             aggregate = new IntegerAggregator(gfield, groupType, afield, aop);
             while (child.hasNext())
                 aggregate.mergeTupleIntoGroup(child.next());
