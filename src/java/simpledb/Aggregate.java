@@ -106,7 +106,7 @@ public class Aggregate extends Operator {
             while (child.hasNext())
                 aggregate.mergeTupleIntoGroup(child.next());
         }
-        else {
+        else {// Type is INT
             aggregate = new IntegerAggregator(gfield, groupType, afield, aop);
             while (child.hasNext())
                 aggregate.mergeTupleIntoGroup(child.next());
@@ -152,9 +152,9 @@ public class Aggregate extends Operator {
         String name = td.getFieldName(this.afield);
 
         if (this.groupField() != Aggregator.NO_GROUPING){
-            Type gtype = td.getFieldType(this.gfield);
-            String gname = td.getFieldName(this.gfield);
-            return new TupleDesc(new Type[]{type, gtype}, new String[]{name, gname});//returns a pair
+            Type groupType = td.getFieldType(this.gfield);
+            String groupName = td.getFieldName(this.gfield);
+            return new TupleDesc(new Type[]{type, groupType}, new String[]{name, groupName});//returns a pair
         }
         else {// if it is  NO Grouping
             return new TupleDesc(new Type[]{type}, new String[]{name});
