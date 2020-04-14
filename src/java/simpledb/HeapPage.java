@@ -21,6 +21,7 @@ public class HeapPage implements Page {
 
     byte[] oldData;
     private final Byte oldDataLock=new Byte((byte)0);
+    private TransactionId dirty;
 
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
@@ -245,6 +246,20 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+        //1) check whether the tuple page id matches the id of the heap page
+        if(!this.pid.equals(t.getRecordId().getPageId()))
+            throw new DbException("You are attempting to delete a tuple that is not on the given Heap Page");
+        else{
+            int tuplenum = t.getRecordId().getTupleNumber();
+            // check whether the tuple with such number exists and can actually be deleted
+            if (!isSlotUsed(tuplenum))
+                throw new DbException("You are attempting to delete a tuple that is not on the given Heap Page");
+            else
+                markSlotUsed(tuplenum, false); // mark the tuple fasle
+        }
+        return;
+
+
     }
 
     /**
@@ -257,6 +272,27 @@ public class HeapPage implements Page {
     public void insertTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+        //Yes, we could use getNumEmptySlots() and append to the tuple to the end of the page
+        // but that would cause fragmentation and headache with cleaning later.
+        // I, Andriy, propose a solution of first checking whether there are any empty slots
+        // but then linearly scanning the heap page to find the first appropriate spots for the
+        // tuple. This would reduce fragmentation, and the solution is O(2n) time complexity
+        // i.e. worse only by a constant factor in terms of time, but more efficienct in terms of
+        // memory usage
+
+        //check if the page is full
+        if (this.getNumEmptySlots() <= 0)
+            throw new DbException("Heap Page you are trying to insert a tuple to is full");
+
+        //iterate over the slots to find an empty one
+        for(int i=0; i<numSlots; i++){
+            if(!isSlotUsed(i)){
+                markSlotUsed(i, true);
+                t.setRecordId(new RecordId(pid, i));
+                tuples[i] = t;
+                return;
+            }
+        }
     }
 
     /**
@@ -265,7 +301,12 @@ public class HeapPage implements Page {
      */
     public void markDirty(boolean dirty, TransactionId tid) {
         // some code goes here
-	// not necessary for lab1
+    // not necessary for lab1
+        // save the transaction that was last dirtied for the next funciton
+        if(dirty)
+            this.dirty = tid;
+        else
+            this.dirty = null;
     }
 
     /**
@@ -274,7 +315,7 @@ public class HeapPage implements Page {
     public TransactionId isDirty() {
         // some code goes here
 	// Not necessary for lab1
-        return null;      
+        return this.dirty; //
     }
 
     /**
@@ -297,7 +338,7 @@ public class HeapPage implements Page {
         // some code goes here
 	if (i < 0 || i/8 >= header.length)
 		return false;
-        return (header[i/8] & (1 << (i % 8))) > 0;
+    return (this.header[i/8] & (1 << (i % 8))) > 0;
     }
 
     /**
@@ -306,6 +347,25 @@ public class HeapPage implements Page {
     private void markSlotUsed(int i, boolean value) {
         // some code goes here
         // not necessary for lab1
+
+        // will have to deal with individual bits here
+
+        // each slot is 1 byte, int(i / 8) will give us a slot
+        // and i % 8 will give us the exact bit position to the
+        // bit we want to mark
+
+        if (value) // start with marking the slot as used, i.e. flip the headerbit to 1
+            this.header[i / 8] = (byte) (this.header[i / 8] | (1 << (i % 8))); // use & here in case a used slot is being marked as used
+        else
+            this.header[i / 8] = (byte) (this.header[i / 8] & ~(1 << (i % 8))); // flip the bit to 0 otherwise
+        // System.out.println("header");
+        // System.out.println(this.header[i/8]);
+        // if(this.header[i/8] != -1){
+        //     System.out.println(i);
+        //     System.out.println("header");
+        //     System.out.println(this.header[i/8]);
+        //     System.out.println(i%8);
+        // }
     }
 
     /**
