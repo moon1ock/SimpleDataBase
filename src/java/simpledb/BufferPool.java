@@ -79,7 +79,7 @@ public class BufferPool {
 	else {
 	    // Eviction is not implemented; throw exception for now.
 	    if (this.pages.size() == this.numPages)
-		throw new DbException("BufferPool is full!");
+		    throw new DbException("BufferPool is full!");
 	    else {
 		Page p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
 		this.pages.put(pid, p);
@@ -134,14 +134,14 @@ public class BufferPool {
 
     /**
      * Add a tuple to the specified table on behalf of transaction tid.  Will
-     * acquire a write lock on the page the tuple is added to and any other 
-     * pages that are updated (Lock acquisition is not needed for lab2). 
+     * acquire a write lock on the page the tuple is added to and any other
+     * pages that are updated (Lock acquisition is not needed for lab2).
      * May block if the lock(s) cannot be acquired.
-     * 
+     *
      * Marks any pages that were dirtied by the operation as dirty by calling
-     * their markDirty bit, and adds versions of any pages that have 
-     * been dirtied to the cache (replacing any existing versions of those pages) so 
-     * that future requests see up-to-date pages. 
+     * their markDirty bit, and adds versions of any pages that have
+     * been dirtied to the cache (replacing any existing versions of those pages) so
+     * that future requests see up-to-date pages.
      *
      * @param tid the transaction adding the tuple
      * @param tableId the table to add the tuple to
@@ -151,6 +151,15 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+
+        // luckily, ConcurrentHashMap supports full concurrency of retrievals
+        // so here it will serve us as cache
+        ArrayList<Page> newpages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
+        for (Page page : newpages){
+            page.markDirty(true, tid);
+            if(pages.containsKey(page.getId())) // update the cache
+                pages.put(page.getId(), page)
+        }
     }
 
     /**
