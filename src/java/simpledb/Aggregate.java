@@ -25,7 +25,7 @@ public class Aggregate extends Operator {
      *
      *
      * @param child
-     *            The DbIterator that is feeding us tuples.
+     *            The OpIterator that is feeding us tuples.
      * @param afield
      *            The column over which we are computing an aggregate.
      * @param gfield
