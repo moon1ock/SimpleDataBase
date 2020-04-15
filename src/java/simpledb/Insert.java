@@ -38,7 +38,8 @@ public class Insert extends Operator {
 
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return child.getTupleDesc();
+        //return child.getTupleDesc();
+        return new TupleDesc(new Type[] { Type.INT_TYPE });
     }
 
     public void open() throws DbException, TransactionAbortedException {
@@ -90,7 +91,7 @@ public class Insert extends Operator {
         Tuple res = new Tuple(new TupleDesc(new Type[]{Type.INT_TYPE}));
         res.setField(0, new IntField(cnt));
         bool = true;
-        return null;
+        return res;
     }
 
     @Override

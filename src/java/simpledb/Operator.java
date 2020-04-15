@@ -43,7 +43,7 @@ public abstract class Operator implements OpIterator {
      *         finished.
      */
     protected abstract Tuple fetchNext() throws DbException,
-            TransactionAbortedException, IOException;
+            TransactionAbortedException;
 
     /**
      * Closes this iterator. If overridden by a subclass, they should call
