@@ -186,6 +186,20 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+        ArrayList<Page> deletedpages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
+        for (Page page : deletedpages){
+            page.markDirty(true, tid);
+            // update cache
+            if(pages.containsKey(page.getId())) // update the cache if it already contains the page
+                pages.put(page.getId(), page);
+            else if(this.pages.size() < this.numPages) // if cache not full, add another page to it
+                pages.put(page.getId(), page);
+            else{ // if it's full, evict first, and then add page
+                this.evictPage();
+                pages.put(page.getId(), page);
+            }
+        }
+
     }
 
     /**
