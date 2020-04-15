@@ -1,7 +1,7 @@
 package simpledb;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -24,6 +24,8 @@ public class BufferPool {
     private int numPages;
 
     private ConcurrentHashMap<PageId, Page> pages;
+
+    private int evitcounter = 0;
 
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
@@ -78,14 +80,13 @@ public class BufferPool {
 	}
 	else {
 	    // Eviction is not implemented; throw exception for now.
-	    if (this.pages.size() == this.numPages)
-            throw new DbException("BufferPool is full!");
+        if (this.pages.size() >= this.numPages)
+            this.evictPage();
             // EVIT A PAGE ANDRIY
-	    else {
+            // was throwing a DBexception here before
 		Page p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
 		this.pages.put(pid, p);
 		return p;
-	    }
 	}
     }
 
@@ -186,7 +187,15 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+
+        //delete the tuple
         ArrayList<Page> deletedpages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
+
+        // check if deletion completed
+        if(deletedpages.isEmpty())
+            throw new DbException("no tuple was deleted");
+
+        // mark pages dirty and update cache
         for (Page page : deletedpages){
             page.markDirty(true, tid);
             // update cache
@@ -210,29 +219,40 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-
+        for(PageId id : this.pages.keySet()){
+            if (this.pages.get(id).isDirty() != null)
+                this.flushPage(id);
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
         Needed by the recovery manager to ensure that the
         buffer pool doesn't keep a rolled back page in its
         cache.
-        
+
         Also used by B+ tree files to ensure that deleted pages
         are removed from the cache so they can be reused safely
     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // not necessary for lab1
+        this.pages.remove(pid);
     }
 
     /**
      * Flushes a certain page to disk
      * @param pid an ID indicating the page to flush
      */
-    private synchronized  void flushPage(PageId pid) throws IOException {
+    private synchronized void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+
+        if(!pages.containsKey(pid))
+            throw new IOException("page pid was not found, cannot flush!");
+        //write the page to the file
+        Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(pages.get(pid));
+        //unmark dirty tag
+        pages.get(pid).markDirty(false, null);
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -249,6 +269,28 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
+
+
+        // for evicting the page, we have implemented a simple
+        // evict counter that will iterate over pages one by one
+        // and remove them in order. Meaning, the first time,
+        // page 1 will be removed, the second time 2 and so on.
+        try{
+            synchronized(this.pages){
+            // allow only 1 thread so that no data is added to the
+            //page while it's being flushed, otherwise, might come
+            // across reading/writing errors
+            this.evitcounter = (this.evitcounter+1)%this.pages.size(); // take modulo if counter is bigger than the buffer pool size
+            ArrayList<PageId> pagestoevict = new ArrayList<PageId>(this.pages.keySet()); // creating an array of all pages since cannot access by index in hashmap
+            PageId evictedpage = pagestoevict.get(this.evitcounter);
+            this.flushPage(evictedpage);
+            this.pages.remove(evictedpage);
+            //
+            }
+        } catch(IOException flush){
+            throw new DbException("Page could not be flushed while evicting");
+        }
+        return;
     }
 
 }

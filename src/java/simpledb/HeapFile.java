@@ -151,7 +151,6 @@ public class HeapFile implements DbFile {
         // some code goes here
         // not necessary for lab1
         ArrayList<Page> deleted = new ArrayList<Page>(); // array to keep track of deleted pages to mark them as diry later
-    
         HeapPage deletedpage = (HeapPage)Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
         deletedpage.deleteTuple(t);
         deleted.add(deletedpage);
