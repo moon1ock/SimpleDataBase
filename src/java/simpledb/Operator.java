@@ -1,5 +1,6 @@
 package simpledb;
 
+import java.io.IOException;
 import java.util.NoSuchElementException;
 
 /**
@@ -42,7 +43,7 @@ public abstract class Operator implements OpIterator {
      *         finished.
      */
     protected abstract Tuple fetchNext() throws DbException,
-            TransactionAbortedException;
+            TransactionAbortedException, IOException;
 
     /**
      * Closes this iterator. If overridden by a subclass, they should call
