@@ -100,7 +100,7 @@ public class HeapFile implements DbFile {
             file.write(page.getPageData()); // write the byte data to the end of the page
             file.close();
         }catch(IOException e){
-            throw new IOException();
+            throw new IOException("error occured while writing to a page!");
         }
     }
 

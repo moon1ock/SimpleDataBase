@@ -288,7 +288,7 @@ public class BufferPool {
             //
             }
         } catch(IOException flush){
-            throw new DbException("Page could not be flushed while evicting");
+            throw new DbException("Flush error occured!");
         }
         return;
     }
