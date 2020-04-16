@@ -1,11 +1,15 @@
 # SimpleDB
-### authored by Andrii Lunin
+### authored by Andrii Lunin and Nurgazy Seidaliev
 
 
 ## This is a simple, straightforward implementation of a Relational Database Management System.
 
-related docs will be added once the tuple aggregators and optimizers are finished
+TODO: run tests
+format code
+do the comments
+check code for we know what
 
+do the writeup
 
 
 

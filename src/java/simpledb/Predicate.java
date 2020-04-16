@@ -17,11 +17,9 @@ public class Predicate implements Serializable {
         EQUALS, GREATER_THAN, LESS_THAN, LESS_THAN_OR_EQ, GREATER_THAN_OR_EQ, LIKE, NOT_EQUALS;
 
         /**
-         * Interface to access operations by integer value for command-line
-         * convenience.
+         * Interface to access operations by integer value for command-line convenience.
          *
-         * @param i
-         *            a valid integer Op index
+         * @param i a valid integer Op index
          */
         public static Op getOp(int i) {
             return values()[i];
@@ -46,15 +44,13 @@ public class Predicate implements Serializable {
         }
 
     }
+
     /**
      * Constructor.
      *
-     * @param field
-     *            field number of passed in tuples to compare against.
-     * @param op
-     *            operation to use for comparison
-     * @param operand
-     *            field value to compare passed in tuples to
+     * @param field   field number of passed in tuples to compare against.
+     * @param op      operation to use for comparison
+     * @param operand field value to compare passed in tuples to
      */
     public Predicate(int field, Op op, Field operand) {
         // some code goes here
@@ -66,8 +62,7 @@ public class Predicate implements Serializable {
     /**
      * @return the field number
      */
-    public int getField()
-    {
+    public int getField() {
         // some code goes here
         return this.field;
     }
@@ -75,8 +70,7 @@ public class Predicate implements Serializable {
     /**
      * @return the operator
      */
-    public Op getOp()
-    {
+    public Op getOp() {
         // some code goes here
         return this.op;
     }
@@ -84,20 +78,17 @@ public class Predicate implements Serializable {
     /**
      * @return the operand
      */
-    public Field getOperand()
-    {
+    public Field getOperand() {
         // some code goes here
         return this.operand;
     }
 
     /**
-     * Compares the field number of t specified in the constructor to the
-     * operand field specified in the constructor using the operator specific in
-     * the constructor. The comparison can be made through Field's compare
-     * method.
+     * Compares the field number of t specified in the constructor to the operand
+     * field specified in the constructor using the operator specific in the
+     * constructor. The comparison can be made through Field's compare method.
      *
-     * @param t
-     *            The tuple to compare against
+     * @param t The tuple to compare against
      * @return true if the comparison is true, false otherwise.
      */
     public boolean filter(Tuple t) {
@@ -111,7 +102,7 @@ public class Predicate implements Serializable {
      */
     public String toString() {
         // some code goes here
-        String s = "f = " + field+ " op = " + op.toString() + " operand = " + operand.toString();
+        String s = "f = " + field + " op = " + op.toString() + " operand = " + operand.toString();
         return s;
 
     }

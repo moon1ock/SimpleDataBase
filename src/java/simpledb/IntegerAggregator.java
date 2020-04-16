@@ -1,4 +1,5 @@
 package simpledb;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,16 +21,12 @@ public class IntegerAggregator implements Aggregator {
     /**
      * Aggregate constructor
      * 
-     * @param gbfield
-     *            the 0-based index of the group-by field in the tuple, or
-     *            NO_GROUPING if there is no grouping
-     * @param gbfieldtype
-     *            the type of the group by field (e.g., Type.INT_TYPE), or null
-     *            if there is no grouping
-     * @param afield
-     *            the 0-based index of the aggregate field in the tuple
-     * @param what
-     *            the aggregation operator
+     * @param gbfield     the 0-based index of the group-by field in the tuple, or
+     *                    NO_GROUPING if there is no grouping
+     * @param gbfieldtype the type of the group by field (e.g., Type.INT_TYPE), or
+     *                    null if there is no grouping
+     * @param afield      the 0-based index of the aggregate field in the tuple
+     * @param what        the aggregation operator
      */
 
     public IntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
@@ -39,18 +36,22 @@ public class IntegerAggregator implements Aggregator {
         this.afield = afield;
         this.what = what;
         this.cnt = new HashMap<Field, Integer>();
+<<<<<<< HEAD
         this.vals = new ConcurrentHashMap<Field, Integer>();
         if(Aggregator.NO_GROUPING == this.gbfield){
+=======
+        if (Aggregator.NO_GROUPING == this.gbfield) {
+>>>>>>> f2b843d37d4a8bf3edf3016503079d34f5849263
             cnt.put(NO_KEY, 0);
             vals.put(NO_KEY, 0);
         }
     }
+
     /**
      * Merge a new tuple into the aggregate, grouping as indicated in the
      * constructor
      * 
-     * @param tup
-     *            the Tuple containing an aggregate field and a group-by field
+     * @param tup the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
@@ -62,22 +63,32 @@ public class IntegerAggregator implements Aggregator {
         int val = ((IntField) (tup.getField(afield))).getValue();
 
         // merges tuples iff field matches.
+<<<<<<< HEAD
         if (gbfield == Aggregator.NO_GROUPING || tup.getTupleDesc().getFieldType(gbfield).equals(gbfieldtype)) {
+=======
+        if (this.gbfield == Aggregator.NO_GROUPING
+                || tup.getTupleDesc().getFieldType(this.gbfield).equals(this.gbfieldtype)) {
+>>>>>>> f2b843d37d4a8bf3edf3016503079d34f5849263
             if (!(vals.containsKey(key))) {
                 vals.put(key, val);
                 cnt.put(key, 1);
             } else {
                 int aux = 0;
-                if(what == Op.MIN){
+                if (what == Op.MIN) {
                     aux = Math.min(vals.get(key), val);
-                }
-                else if(what == Op.MAX){
+                } else if (what == Op.MAX) {
                     aux = Math.max(vals.get(key), val);
+<<<<<<< HEAD
                 }
                 else if(what == Op.AVG || what == Op.SUM){
                     aux = vals.get(key) + val;// if it is AVG, the division will be performed in iterator
                 }
                 else if(what == Op.COUNT){
+=======
+                } else if (what == Op.AVG || what == Op.SUM) {
+                    aux = vals.get(key) + val;
+                } else if (what == Op.COUNT) {
+>>>>>>> f2b843d37d4a8bf3edf3016503079d34f5849263
                     aux = vals.get(key) + 1;
                 }
                 vals.put(key, aux);
@@ -89,10 +100,10 @@ public class IntegerAggregator implements Aggregator {
     /**
      * Create a OpIterator over group aggregate results.
      * 
-     * @return a OpIterator whose tuples are the pair (groupVal, aggregateVal)
-     *         if using group, or a single (aggregateVal) if no grouping. The
-     *         aggregateVal is determined by the type of aggregate specified in
-     *         the constructor.
+     * @return a OpIterator whose tuples are the pair (groupVal, aggregateVal) if
+     *         using group, or a single (aggregateVal) if no grouping. The
+     *         aggregateVal is determined by the type of aggregate specified in the
+     *         constructor.
      */
     public OpIterator iterator() {
         // some code goes here
@@ -135,5 +146,10 @@ public class IntegerAggregator implements Aggregator {
         }
 
         return new TupleIterator(td, tuples);
+<<<<<<< HEAD
+=======
+        // throw new
+        // UnsupportedOperationException("please implement me for lab2");
+>>>>>>> f2b843d37d4a8bf3edf3016503079d34f5849263
     }
 }
