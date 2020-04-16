@@ -1,4 +1,7 @@
 # SimpleDB
+
+# TODO: write readable docs
+
 ### created by Andrii Lunin
 
 ## Query walkthrough
