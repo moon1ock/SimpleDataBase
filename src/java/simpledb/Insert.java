@@ -83,14 +83,12 @@ public class Insert extends Operator {
                 buf.insertTuple(t, tableId, child.next());
                 cnt++;
             }
-        } catch (IOException ex){
+        } catch (IOException ex){ //throws an exception in case of invalid IO
             ex.printStackTrace();
         }
-
-        //TODO add IO exception
         Tuple res = new Tuple(new TupleDesc(new Type[]{Type.INT_TYPE}));
         res.setField(0, new IntField(cnt));
-        bool = true;
+        bool = true; //label it as already inserted to avoid errors in the future
         return res;
     }
 
@@ -103,6 +101,6 @@ public class Insert extends Operator {
     @Override
     public void setChildren(OpIterator[] children) {
         // some code goes here
-        child = children[0];
+        child = children[0]; //sets to the first child in children
     }
 }

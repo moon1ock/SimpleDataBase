@@ -99,28 +99,28 @@ public class StringAggregator implements Aggregator {
         TupleDesc td;
         Tuple tuple;
         Field fieldKey;
-        Enumeration<Field> fieldKeys;
+        Enumeration<Field> fieldKeys;//to store keys
         ArrayList<Tuple> lot = new ArrayList<Tuple>();// list of tuples
         if(what == Op.MAX || what == Op.MIN) {// operator is either MAX or MIN
             td = new TupleDesc(new Type[]{gbfieldtype, Type.STRING_TYPE});
             fieldKeys = extremum.keys();
-            while (fieldKeys.hasMoreElements()) {
+            while (fieldKeys.hasMoreElements()) {//linearly iterates through keys
                 fieldKey = fieldKeys.nextElement();
                 tuple = new Tuple(td);
                 tuple.setField(0, fieldKey);
                 tuple.setField(1, new StringField(extremum.get(fieldKey), 1048));
-                lot.add(tuple);
+                lot.add(tuple);//adds tuple to the list of tuples
             }
         }
         else { // if COUNT
             td = new TupleDesc (new Type[]{gbfieldtype, Type.INT_TYPE});
             fieldKeys = values.keys();
-            while (fieldKeys.hasMoreElements()) {
+            while (fieldKeys.hasMoreElements()) {//linearly iterates through keys
                 fieldKey = fieldKeys.nextElement();
                 tuple = new Tuple(td);
                 tuple.setField(0, fieldKey);
                 tuple.setField(1, new IntField(values.get(fieldKey)));
-                lot.add(tuple);
+                lot.add(tuple); //adds tuple to the list of tuples
             }
         }
         return new TupleIterator(td, lot);

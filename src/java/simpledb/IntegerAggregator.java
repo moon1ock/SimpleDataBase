@@ -38,8 +38,8 @@ public class IntegerAggregator implements Aggregator {
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
         this.what = what;
-        this.vals = new ConcurrentHashMap<Field, Integer>();
         this.cnt = new HashMap<Field, Integer>();
+        this.vals = new ConcurrentHashMap<Field, Integer>();
         if(Aggregator.NO_GROUPING == this.gbfield){
             cnt.put(NO_KEY, 0);
             vals.put(NO_KEY, 0);
@@ -59,10 +59,10 @@ public class IntegerAggregator implements Aggregator {
             key = tup.getField(gbfield);
         }
 
-        int val = ((IntField) (tup.getField(this.afield))).getValue();
+        int val = ((IntField) (tup.getField(afield))).getValue();
 
         // merges tuples iff field matches.
-        if (this.gbfield == Aggregator.NO_GROUPING || tup.getTupleDesc().getFieldType(this.gbfield).equals(this.gbfieldtype)) {
+        if (gbfield == Aggregator.NO_GROUPING || tup.getTupleDesc().getFieldType(gbfield).equals(gbfieldtype)) {
             if (!(vals.containsKey(key))) {
                 vals.put(key, val);
                 cnt.put(key, 1);
@@ -75,7 +75,7 @@ public class IntegerAggregator implements Aggregator {
                     aux = Math.max(vals.get(key), val);
                 }
                 else if(what == Op.AVG || what == Op.SUM){
-                    aux = vals.get(key) + val;
+                    aux = vals.get(key) + val;// if it is AVG, the division will be performed in iterator
                 }
                 else if(what == Op.COUNT){
                     aux = vals.get(key) + 1;
@@ -99,32 +99,18 @@ public class IntegerAggregator implements Aggregator {
         TupleDesc td;
         ArrayList<Tuple> tuples = new ArrayList<Tuple>();
 
-        if (this.gbfield == Aggregator.NO_GROUPING) {
-            td = new TupleDesc(new Type[] { Type.INT_TYPE });
+        if (this.gbfield != Aggregator.NO_GROUPING) {
+            td = new TupleDesc(new Type[] { gbfieldtype, Type.INT_TYPE });
+            Enumeration<Field> keys = vals.keys();
 
-            Tuple t = new Tuple(td);
-
-            int value = this.vals.get(NO_KEY);
-            if (this.what == Aggregator.Op.AVG) {
-                value /= this.cnt.get(NO_KEY);
-            } else if (this.what == Aggregator.Op.COUNT) {
-                value = this.cnt.get(NO_KEY);
-            }
-
-            t.setField(0, new IntField(value));
-            tuples.add(t);
-        } else {
-            td = new TupleDesc(new Type[] { this.gbfieldtype, Type.INT_TYPE });
-            Enumeration<Field> keys = this.vals.keys();
-
-            while (keys.hasMoreElements()) {
+            while (keys.hasMoreElements()) {//linear iteration through keys
                 Tuple t = new Tuple(td);
                 Field key = keys.nextElement();
-                int value = this.vals.get(key);
-                if (this.what == Aggregator.Op.AVG) {
-                    value /= this.cnt.get(key);
-                } else if (this.what == Aggregator.Op.COUNT) {
-                    value = this.cnt.get(key);
+                int value = vals.get(key);
+                if (what == Aggregator.Op.AVG) {
+                    value /= cnt.get(key);
+                } else if (what == Aggregator.Op.COUNT) {
+                    value = cnt.get(key);
                 }
 
                 t.setField(0, key);
@@ -132,9 +118,22 @@ public class IntegerAggregator implements Aggregator {
                 tuples.add(t);
             }
         }
+        else {// NO_GROUPING
+            td = new TupleDesc(new Type[] { Type.INT_TYPE });
+
+            Tuple t = new Tuple(td);
+
+            int value = vals.get(NO_KEY);
+            if (what == Aggregator.Op.AVG) {
+                value /= cnt.get(NO_KEY);
+            } else if (what == Aggregator.Op.COUNT) {
+                value = cnt.get(NO_KEY);
+            }
+
+            t.setField(0, new IntField(value));
+            tuples.add(t);
+        }
 
         return new TupleIterator(td, tuples);
-        //throw new
-        //UnsupportedOperationException("please implement me for lab2");
     }
 }
